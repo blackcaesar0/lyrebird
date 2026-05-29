@@ -21,8 +21,23 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ".[dev]"
+          pip install toml pytest ruff
       - name: Lint with ruff
         run: ruff check .
       - name: Run tests
         run: pytest
+
+  deb:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build .deb package
+        run: ./ci/build-deb.sh
+      - name: Archive package
+        uses: actions/upload-artifact@v4
+        with:
+          name: lyrebird-deb
+          retention-days: 7
+          if-no-files-found: error
+          path: 'ci/*.deb'

@@ -39,6 +39,18 @@ def build_sox_command(scale, preset, buffer_size):
     else:
         command_effects += ["downsample", "1"]
 
+    # Tremolo (robotic wobble): tremolo <speed Hz> <depth %>.
+    if getattr(preset, "tremolo", None) is not None:
+        command_effects += ["tremolo", str(preset.tremolo), "80"]
+
+    # Reverb: reverb <reverberance 0-100>.
+    if getattr(preset, "reverb", None) is not None:
+        command_effects += ["reverb", str(preset.reverb)]
+
+    # Echo: a fixed, pleasant single echo when enabled.
+    if getattr(preset, "echo", False):
+        command_effects += ["echo", "0.8", "0.9", "200", "0.3"]
+
     return [
         "sox",
         "--buffer", str(buffer_size),
@@ -93,6 +105,15 @@ class Audio:
             return attribute[1]
         return None
 
+    def _is_monitor_loopback(self, module):
+        """True if ``module`` is a Lyrebird monitoring loopback."""
+        if module[1] != "module-loopback":
+            return False
+        return any(
+            key == "source" and value == f"{OUTPUT_SINK_NAME}.monitor"
+            for key, value in module[2]
+        )
+
     def load_monitor(self):
         """Route the Lyrebird output to the default sink so the user can hear
         their own (effected) voice. Safe to call when already monitoring."""
@@ -107,12 +128,8 @@ class Audio:
         for module in self.get_pactl_modules():
             if len(module) < 3 or len(module[2]) < 1:
                 continue
-            if module[1] != "module-loopback":
-                continue
-            for key, value in module[2]:
-                if key == "source" and value == f"{OUTPUT_SINK_NAME}.monitor":
-                    subprocess.run(["pactl", "unload-module", str(module[0])])
-                    break
+            if self._is_monitor_loopback(module):
+                subprocess.run(["pactl", "unload-module", str(module[0])])
 
     def load_pa_modules(self):
         self.null_sink = subprocess.check_call(
@@ -133,24 +150,25 @@ class Audio:
         return parse_pactl_short(pactl_list.stdout)
 
     def unload_pa_modules(self):
-        """Unload only the Lyrebird-controlled modules (loopback, null sink, remap)."""
-        self.unload_monitor()
-        modules = self.get_pactl_modules()
+        """Unload only the Lyrebird-controlled modules (loopback, null sink, remap).
+
+        Uses a single ``pactl list short`` scan to handle all three module types.
+        """
         lyrebird_module_ids = []
-        for module in modules:
-            if len(module) < 3:
-                continue
-            if len(module[2]) < 1:
+        for module in self.get_pactl_modules():
+            if len(module) < 3 or len(module[2]) < 1:
                 continue
 
-            if module[1] == "module-null-sink":
-                sink_name = self.get_sink_name(module[2][0])
-                if sink_name == OUTPUT_SINK_NAME:
+            module_type = module[1]
+            if module_type == "module-null-sink":
+                if self.get_sink_name(module[2][0]) == OUTPUT_SINK_NAME:
                     lyrebird_module_ids.append(module[0])
-            elif module[1] == "module-remap-source":
-                sink_name = self.get_sink_name(module[2][0])
-                if sink_name == INPUT_SOURCE_NAME:
+            elif module_type == "module-remap-source":
+                if self.get_sink_name(module[2][0]) == INPUT_SOURCE_NAME:
                     lyrebird_module_ids.append(module[0])
+            elif self._is_monitor_loopback(module):
+                lyrebird_module_ids.append(module[0])
 
         for module_id in lyrebird_module_ids:
             subprocess.run(["pactl", "unload-module", str(module_id)])
+
