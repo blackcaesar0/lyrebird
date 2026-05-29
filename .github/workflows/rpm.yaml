@@ -16,11 +16,11 @@ jobs:
           sudo apt update
           sudo apt-get --assume-yes install podman
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build rpm
         run: 'podman run --rm -v .:/lyrebird centos:stream /lyrebird/ci/build-rpm.sh'
       - name: Archive packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: centos-packages
           retention-days: 7
@@ -34,11 +34,11 @@ jobs:
           sudo apt update
           sudo apt-get --assume-yes install podman
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build rpm
         run: 'podman run --rm -v .:/lyrebird fedora:latest /lyrebird/ci/build-rpm.sh'
       - name: Archive packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fedora-packages
           retention-days: 7
