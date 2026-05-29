@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.4.2] - 2026/05/29
+
+### Fixed
+
+- **Audio capture on PipeWire.** SoX was hardcoded to capture from a device
+  literally named `default`, which doesn't resolve under PipeWire-pulse, so no
+  audio was processed. Lyrebird now auto-detects the system's real default
+  microphone (skipping monitors and its own virtual devices). A new
+  `input_device` option in `config.toml` allows overriding the source.
+- **Packaging no longer disrupts PipeWire.** The `.deb` previously declared
+  `pipewire-pulse | pulseaudio`, which let apt satisfy it by installing the
+  PulseAudio daemon and removing PipeWire's audio packages. The dependency is
+  now just `pulseaudio-utils` (the `pactl` client tools), which does not
+  displace PipeWire.
+- `pactl load-module` module indices are no longer printed to the terminal.
+
 ## [v1.4.1] - 2026/05/29
 
 ### Fixed

@@ -2,6 +2,7 @@ import app.core.audio as audio_module
 from app.core.audio import (
     build_sox_command,
     parse_pactl_short,
+    pick_input_source,
     Audio,
     PITCH_MULTIPLIER,
     OUTPUT_SINK_NAME,
@@ -113,3 +114,41 @@ def test_is_monitor_loopback():
         ("14", "module-loopback", [("source", "Other.monitor")]))
     assert not audio._is_monitor_loopback(
         ("10", "module-null-sink", [("sink_name", OUTPUT_SINK_NAME)]))
+
+
+def test_build_sox_command_uses_input_device():
+    preset = Preset("Off", pitch_value=0.0)
+    cmd = build_sox_command(0, preset, 128, "alsa_input.real_mic")
+    # The capture source is the first "-t pulseaudio <dev>" pair.
+    i = cmd.index("-t")
+    assert cmd[i + 1] == "pulseaudio"
+    assert cmd[i + 2] == "alsa_input.real_mic"
+
+
+def test_pick_input_source_prefers_real_default():
+    mic = "alsa_input.pci-0000_00_1f.3.HiFi__hw_sofhdadsp__source"
+    chosen = pick_input_source("", mic, [mic, "alsa_output.x.monitor"])
+    assert chosen == mic
+
+
+def test_pick_input_source_skips_monitor_and_lyrebird_default():
+    mic = "alsa_input.real_mic"
+    # Default is a Lyrebird device (e.g. a leftover from a crash) -> skip it.
+    chosen = pick_input_source(
+        "", "Lyrebird-Input",
+        ["Lyrebird-Input", "alsa_output.x.monitor", mic])
+    assert chosen == mic
+
+
+def test_pick_input_source_honors_explicit_override():
+    chosen = pick_input_source("my.custom.source", "alsa_input.real_mic", [])
+    assert chosen == "my.custom.source"
+
+
+def test_pick_input_source_auto_keyword_is_autodetect():
+    mic = "alsa_input.real_mic"
+    assert pick_input_source("auto", mic, [mic]) == mic
+
+
+def test_pick_input_source_falls_back_to_default_literal():
+    assert pick_input_source("", "", []) == "default"

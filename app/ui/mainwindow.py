@@ -276,7 +276,8 @@ class MainWindow(Gtk.Window):
     def start_voice_changer(self):
         preset = self.get_current_present()
         pitch = self.pitch_scale.get_value()
-        state.audio.run_sox(pitch, preset, state.config.buffer_size)
+        state.audio.run_sox(pitch, preset, state.config.buffer_size,
+                            getattr(state.config, "input_device", ""))
 
     def stop_voice_changer(self):
         state.audio.kill_sox()

@@ -18,6 +18,10 @@ class Configuration:
     buffer_size: int = DEFAULT_BUFFER_SIZE
     # Restore the last used preset/pitch when Lyrebird starts.
     remember_last_preset: bool = True
+    # PulseAudio/PipeWire source to capture from. "" or "auto" auto-detects the
+    # system default microphone (recommended). Set a specific source name to
+    # override (see `pactl list short sources`).
+    input_device: str = ""
 
 
 @dataclass
@@ -63,8 +67,10 @@ def load_config():
         buffer_size = DEFAULT_BUFFER_SIZE
 
     remember = _as_bool(config.get('remember_last_preset', True), True)
+    input_device = str(config.get('input_device', '') or '')
 
-    return Configuration(buffer_size=buffer_size, remember_last_preset=remember)
+    return Configuration(buffer_size=buffer_size, remember_last_preset=remember,
+                         input_device=input_device)
 
 
 def create_config_dir():
@@ -77,9 +83,13 @@ CONFIG_CONTENTS = '''
 # buffer_size = The buffer size to use for sox. Higher = better quality, at
 # the cost of higher latency. Default value is 128
 # remember_last_preset = Restore the last used preset and pitch on launch.
+# input_device = Source to capture from. Leave blank (or "auto") to use the
+#   system default microphone. To override, set a source name from
+#   `pactl list short sources`.
 [[config]]
 buffer_size = 128
 remember_last_preset = true
+input_device = ""
 '''
 
 
