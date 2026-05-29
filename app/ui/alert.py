@@ -1,5 +1,5 @@
-import gi
-from gi.repository import Gtk, Gdk, GdkPixbuf
+from gi.repository import Gtk
+
 
 class Alert:
     def __init__(self, parent):

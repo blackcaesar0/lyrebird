@@ -1,0 +1,45 @@
+[project]
+name = "lyrebird-voice-changer"
+version = "1.3.0"
+description = "Simple and powerful voice changer for Linux, written with Python & GTK."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.7"
+authors = [
+    { name = "megabytesofrem" },
+    { name = "Harry Stanton" },
+]
+dependencies = [
+    "toml",
+    # PyGObject (python-gobject) is required for the GTK GUI but is usually
+    # installed via the system package manager rather than pip.
+]
+
+[project.urls]
+Homepage = "https://github.com/lyrebird-voice-changer/lyrebird"
+Issues = "https://github.com/lyrebird-voice-changer/lyrebird/issues"
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "black"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py37"
+
+[tool.ruff.lint]
+# E501 (line length) is handled by the formatter; keep the essentials.
+select = ["E", "F", "W"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# app.py intentionally imports modules after runtime dependency checks so it can
+# show friendly errors before pulling in GTK etc.
+"app.py" = ["E402"]
+# launch.py imports modules inside functions purely to probe their availability.
+"app/core/launch.py" = ["F401"]
+
+[tool.black]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

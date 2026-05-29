@@ -1,0 +1,4 @@
+# Runtime Python dependencies for Lyrebird.
+# Note: PyGObject (GTK bindings) and the system tools `sox`, `pactl` and
+# `pavucontrol` must be installed via your distro's package manager.
+toml

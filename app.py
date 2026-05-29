@@ -3,13 +3,15 @@
 import sys
 import platform
 
-print("[info] Starting Lyrebird v1.2.0")
+from app.core.version import VERSION_STRING
+
+print(f"[info] Starting Lyrebird {VERSION_STRING}")
 
 major = sys.version_info[0]
 minor = sys.version_info[1]
 
 # Check for Python 3.7+
-if major < 3 and minor < 7:
+if major < 3 or (major == 3 and minor < 7):
     print("[error] Python 3.7 or higher is required to run Lyrebird")
     input("Press return to exit...")
     sys.exit(1)
@@ -54,7 +56,7 @@ if not Launch.check_pactl():
   * On Ubuntu, Debian, pop_OS, or Mint, try running: sudo apt install pulseaudio-utils
   * On Arch, this comes with the package "pipewire-pulse", please refer to the Arch Wiki page (below).
   * On all other distros, this package may have a different name, try searching for "pactl" or "pulseaudio utilities".
-  
+
 If after installing PulseAudio utilities and you still see this error, or your distro does not contain an equivalent package, your audio server may be configured in a way that is incompatible with Lyrebird. The "pactl" command is required for Lyrebird.
 
 Additional help can be found in the Lyrebird repo: https://github.com/lyrebird-voice-changer/lyrebird/issues
@@ -69,7 +71,7 @@ On Ubuntu, Debian, pop_OS, or Mint, try running:
 On Arch, this comes with the package <i>pipewire-pulse</i>, please refer to the <a href="https://wiki.archlinux.org/title/PipeWire">Arch Wiki page</a>.
 
 On all other distros, this package may have a different name, try searching for "pactl" or "pulseaudio utilities".
-  
+
 If after installing PulseAudio utilities and you still see this error, or your distro does not contain an equivalent package, your audio server may be configured in a way that is incompatible with Lyrebird. The "pactl" command is required for Lyrebird.
 
 Additional help can be found in the <a href="https://github.com/lyrebird-voice-changer/lyrebird/issues">Lyrebird repo</a>.'''
@@ -99,7 +101,7 @@ If you're using Arch, try running:
 
 For all other distros, try running:
     <i>pip3 install toml</i>
-    
+
 Additional help can be found in the <a href="https://github.com/lyrebird-voice-changer/lyrebird/issues">Lyrebird repo</a>.'''
 
     alert = Alert(None)
