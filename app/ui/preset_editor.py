@@ -12,7 +12,7 @@ import app.core.presets as presets
 
 class PresetEditor(Gtk.Dialog):
     def __init__(self, parent):
-        super().__init__(title="Manage Presets", transient_for=parent, flags=0)
+        super().__init__(title="Manage Presets", transient_for=parent)
         self.set_default_size(420, 460)
         self.add_button("Close", Gtk.ResponseType.CLOSE)
 

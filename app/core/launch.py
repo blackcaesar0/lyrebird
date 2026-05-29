@@ -17,7 +17,10 @@ class Launch:
             gi.require_version('Gtk', '3.0')
             from gi.repository import Gtk, Gdk, GdkPixbuf
             return True
-        except ModuleNotFoundError:
+        except (ImportError, ValueError) as e:
+            # ImportError: gi / the C extension is missing or broken.
+            # ValueError: gi is present but the GTK 3.0 namespace isn't available.
+            print(f"[error] GTK check failed: {e}")
             return False
 
     @staticmethod
@@ -25,7 +28,8 @@ class Launch:
         try:
             import toml
             return True
-        except ModuleNotFoundError:
+        except ImportError as e:
+            print(f"[error] toml check failed: {e}")
             return False
 
     @staticmethod
