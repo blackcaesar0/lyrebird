@@ -2,7 +2,7 @@ Name:          lyrebird
 Summary:       Simple and powerful voice changer for Linux, written with Python & GTK.
 URL:           https://github.com/lyrebird-voice-changer/%{name}
 
-Version:       1.4.1
+Version:       1.4.2
 Release:       1%{dist}
 License:       MIT
 

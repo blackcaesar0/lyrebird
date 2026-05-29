@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lyrebird-voice-changer"
-version = "1.4.1"
+version = "1.4.2"
 description = "Simple and powerful voice changer for Linux, written with Python & GTK."
 readme = "README.md"
 license = { text = "MIT" }

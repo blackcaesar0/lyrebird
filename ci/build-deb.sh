@@ -7,7 +7,7 @@
 # Requires: dpkg-deb (from dpkg). No root/fakeroot needed.
 set -eu
 
-VERSION="1.4.1"
+VERSION="1.4.2"
 ARCH="all"
 PKG="lyrebird_${VERSION}_${ARCH}"
 
@@ -59,7 +59,7 @@ Version: $VERSION
 Section: sound
 Priority: optional
 Architecture: $ARCH
-Depends: python3 (>= 3.7), python3-gi, gir1.2-gtk-3.0, python3-toml, sox, libsox-fmt-pulse, pavucontrol, pulseaudio-utils, pipewire-pulse | pulseaudio
+Depends: python3 (>= 3.7), python3-gi, gir1.2-gtk-3.0, python3-toml, sox, libsox-fmt-pulse, pavucontrol, pulseaudio-utils
 Maintainer: Lyrebird maintainers
 Homepage: https://github.com/lyrebird-voice-changer/lyrebird
 Description: Simple and powerful voice changer for Linux
