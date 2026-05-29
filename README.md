@@ -4,19 +4,30 @@ Simple and powerful voice changer for Linux, written with Python & GTK.
 
 ![Lyrebird Screenshot](https://raw.githubusercontent.com/lyrebird-voice-changer/lyrebird/master/preview.png)
 
-## Archived
-
-As of December 2023, Lyrebird has ceased development and is now archived. Thank you to our users and contributors.
-
-As an alternative, we recommend looking at [Easy Effects](https://github.com/wwmm/easyeffects).
+> **Note:** The original Lyrebird was archived in December 2023. This is a
+> maintained fork that continues development. If you'd prefer a different
+> approach, [Easy Effects](https://github.com/wwmm/easyeffects) is also great.
 
 ## Features
 
 - Built in effects for accurate male and female voices.
-- Ability to create and load custom presets.
+- Create, edit and delete custom presets **directly in the GUI** (no need to
+  hand-edit TOML anymore).
 - Manual pitch scale for finer adjustment.
+- **Monitor mode** to hear your own effected voice in real time.
+- **Remembers your last used preset and pitch** between sessions.
 - Creates its own temporary virtual input device.
 - A clean and easy to use GUI.
+
+## What's new in v1.3.0
+
+- In-app preset management (add / edit / remove custom presets).
+- Monitor toggle to hear yourself.
+- Last preset and pitch are restored on launch (configurable).
+- Numerous bug fixes: the configured `buffer_size` is now actually used, the
+  Python version check works correctly, the window icon loads regardless of the
+  working directory, and a crash when a second instance launched is fixed.
+- A test suite, linting (ruff) / formatting (black) config and CI.
 
 ## Limitations
 
@@ -95,11 +106,28 @@ One-liners to install requirements:
 
 *(If you wish to see your distro here please submit an issue/pull request for this section.)*
 
+## Running from source
+
+If you'd rather run the latest code directly from a clone:
+
+```sh
+git clone https://github.com/lyrebird-voice-changer/lyrebird.git
+cd lyrebird
+# Install the requirements listed below for your distro, then:
+python3 -B app.py
+```
+
 ## Lyrebird Usage
 
 1. Select a preset or set a custom pitch and flip the switch
 2. Change the input device for the application to **Lyrebird Virtual Input**, this can be done in-app or using `pavucontrol` if you're not given the option
 3. Ignore any applications that ask if you want to use "Lyrebird Output" (e.g. Discord), this is used internally and isn't necessary to use Lyrebird
+4. (Optional) Enable **Monitor (hear yourself)** to hear your effected voice through your speakers/headphones
+5. (Optional) Use the **+** button in the title bar to add or remove your own custom presets
+
+Your last used preset and pitch are remembered automatically. You can disable
+this by setting `remember_last_preset = false` in
+`~/.config/lyrebird/config.toml`.
 
 ### Changing using `pavucontrol`
 
@@ -144,6 +172,25 @@ Custom presets are stored in `~/.config/lyrebird/presets.toml`. To edit and add 
 # downsample_amount = 8
 # volume_boost = 8
 ```
+
+## Development
+
+Lyrebird's non-GUI logic (presets, config, the SoX command builder and the
+`pactl` parser) is covered by a test suite.
+
+```sh
+# Install dev tooling
+pip3 install -e ".[dev]"
+
+# Run the tests
+pytest
+
+# Lint and format
+ruff check .
+black .
+```
+
+The core code lives in `app/core/` and the GTK UI in `app/ui/`.
 
 ## Packaging
 

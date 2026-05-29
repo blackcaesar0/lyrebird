@@ -1,6 +1,6 @@
 # shutil.which supported from Python 3.3+
 from shutil import which
-from json import loads
+from json import loads, JSONDecodeError
 import subprocess
 
 
@@ -17,7 +17,10 @@ class Launch:
             gi.require_version('Gtk', '3.0')
             from gi.repository import Gtk, Gdk, GdkPixbuf
             return True
-        except ModuleNotFoundError:
+        except (ImportError, ValueError) as e:
+            # ImportError: gi / the C extension is missing or broken.
+            # ValueError: gi is present but the GTK 3.0 namespace isn't available.
+            print(f"[error] GTK check failed: {e}")
             return False
 
     @staticmethod
@@ -25,7 +28,8 @@ class Launch:
         try:
             import toml
             return True
-        except ModuleNotFoundError:
+        except ImportError as e:
+            print(f"[error] toml check failed: {e}")
             return False
 
     @staticmethod
@@ -49,8 +53,15 @@ class Launch:
 
     @staticmethod
     def determine_audio_server():
-        pactl_info = subprocess.run(["pactl", "--format=json", "info"], capture_output=True, encoding="utf8")
-        server_info = loads(pactl_info.stdout)
-        if "server_name" in server_info:
-            return server_info["server_name"]
-        return None
+        try:
+            pactl_info = subprocess.run(
+                ["pactl", "--format=json", "info"],
+                capture_output=True, encoding="utf8",
+            )
+            server_info = loads(pactl_info.stdout)
+            return server_info.get("server_name")
+        except (JSONDecodeError, OSError) as e:
+            # Older pactl versions don't support --format=json. This is purely
+            # informational, so degrade gracefully instead of crashing.
+            print(f"[warning] Could not determine audio server: {e}")
+            return None

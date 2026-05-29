@@ -4,6 +4,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.3.0] - 2026/05/29
+
+### Added
+
+- **In-app preset management.** Custom presets can now be created, listed and
+  deleted from a dialog in the GUI (opened via the **+** button in the title
+  bar) without manually editing `presets.toml`.
+- **Monitor mode.** A new toggle routes Lyrebird's output back to your default
+  device so you can hear your own effected voice in real time.
+- **Last preset and pitch are remembered** between sessions and restored on
+  launch. This can be disabled with `remember_last_preset = false` in
+  `config.toml`.
+- A test suite (`pytest`), linting (`ruff`) and formatting (`black`)
+  configuration via `pyproject.toml`, and a GitHub Actions CI workflow.
+- `requirements.txt` and packaging metadata in `pyproject.toml`.
+
+### Fixed
+
+- The configured `buffer_size` is now actually honoured by SoX (it was
+  previously hardcoded to `17`, ignoring `config.toml`).
+- Corrected the Python version check, which used faulty `and` logic and never
+  rejected unsupported versions such as Python 3.6.
+- Fixed a crash (`NameError`) shown when a second instance of Lyrebird was
+  launched while one was already running.
+- The window/about icon now loads regardless of the current working directory.
+- `determine_audio_server` no longer crashes on `pactl` versions that don't
+  support JSON output; it degrades gracefully instead.
+- Malformed or partial `config.toml` values now fall back to defaults instead
+  of preventing startup.
+- The default-preset selection is no longer tied to a hardcoded list index.
+
+### Changed
+
+- Audio command building and `pactl` output parsing were refactored into pure,
+  unit-tested functions.
+- Version is now defined in a single place (`app/core/version.py`).
+
 ## [v1.2.0] - 2023/08/20
 
 ### Added

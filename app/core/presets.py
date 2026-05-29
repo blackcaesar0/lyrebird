@@ -1,18 +1,18 @@
 import toml
-import pathlib
-from pathlib import Path
 
 import app.core.config as config
+
 
 def key_or_default(key, dict, default):
     return dict[key] if key in dict else default
 
+
 class Preset:
     def __init__(self,
                 name,
-                pitch_value,
-                downsample_amount,
-                volume_boost):
+                pitch_value=None,
+                downsample_amount=None,
+                volume_boost=None):
         self.name = name
         self.pitch_value = pitch_value
         self.downsample_amount = downsample_amount
@@ -73,10 +73,14 @@ PRESETS_TOML_HEADER='''# Effect presets are defined in presets.toml
 # e.g.
 # [[presets]]
 # name = "Bad Mic"
-# pitch_value = "-1.5"
-# downsample_amount = "8"
-# volume_boost = "8"
+# pitch_value = -1.5
+# downsample_amount = 8
+# volume_boost = 8
 '''
+
+# Names reserved by the built-in presets. Used by the GUI editor so it only
+# manages user-created presets.
+DEFAULT_PRESET_NAMES = {preset.name for preset in DEFAULT_PRESETS}
 
 def load_presets():
     '''
@@ -153,7 +157,7 @@ def load_presets():
     if contains_legacy:
         print(f"[info] Config file ({path}) contains legacy presets, writing new file with {len(custom_presets)} custom preset(s)")
         create_presets(custom_presets)
-        
+
     return { "presets": custom_presets, "failed": failed }
 
 def create_presets(presets=[]):
@@ -173,3 +177,64 @@ def create_presets(presets=[]):
         presets = list(presets)
         toml_data = toml.dumps({ "presets": presets })
         f.write(toml_data)
+
+
+def load_custom_presets():
+    '''Return only the user's custom presets currently saved on disk.'''
+    return load_presets()["presets"]
+
+
+def validate_preset_fields(name, pitch_value, downsample_amount, volume_boost):
+    '''
+    Validate raw preset field values (as provided by the GUI editor).
+
+    Returns ``(preset, error)`` where exactly one is ``None``. ``pitch_value``,
+    ``downsample_amount`` and ``volume_boost`` may be ``None`` to leave the
+    corresponding effect unset.
+    '''
+    name = (name or "").strip()
+    if not name:
+        return None, "Preset name cannot be empty."
+    if name in DEFAULT_PRESET_NAMES:
+        return None, f"'{name}' is a reserved built-in preset name."
+
+    parsed_pitch = None
+    if pitch_value is not None and pitch_value != "":
+        try:
+            parsed_pitch = min(max(float(pitch_value), -10.0), 10.0)
+        except (TypeError, ValueError):
+            return None, "Pitch must be a number between -10 and 10."
+
+    parsed_downsample = None
+    if downsample_amount is not None and downsample_amount != "":
+        try:
+            parsed_downsample = int(downsample_amount)
+        except (TypeError, ValueError):
+            return None, "Downsample must be a whole number."
+        if parsed_downsample < 1:
+            return None, "Downsample must be 1 or greater."
+
+    parsed_volume = None
+    if volume_boost is not None and volume_boost != "":
+        try:
+            parsed_volume = int(volume_boost)
+        except (TypeError, ValueError):
+            return None, "Volume boost must be a whole number (dB)."
+
+    return Preset(name, parsed_pitch, parsed_downsample, parsed_volume), None
+
+
+def add_custom_preset(preset):
+    '''Append a custom preset and persist all custom presets to disk.'''
+    custom = load_custom_presets()
+    custom = [p for p in custom if p.name != preset.name]
+    custom.append(preset)
+    create_presets(custom)
+    return custom
+
+
+def delete_custom_preset(name):
+    '''Remove a custom preset by name and persist the remainder.'''
+    custom = [p for p in load_custom_presets() if p.name != name]
+    create_presets(custom)
+    return custom

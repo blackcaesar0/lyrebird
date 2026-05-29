@@ -14,7 +14,7 @@ def place_lock():
     lock_file = open(lock_file_path, 'w')
     try:
         fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except:
+    except OSError:
         return None
     return lock_file
 

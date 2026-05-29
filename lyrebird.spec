@@ -2,8 +2,8 @@ Name:          lyrebird
 Summary:       Simple and powerful voice changer for Linux, written with Python & GTK.
 URL:           https://github.com/lyrebird-voice-changer/%{name}
 
-Version:       1.2.0
-Release:       3%{dist}
+Version:       1.3.0
+Release:       1%{dist}
 License:       MIT
 
 Source0:       %{URL}/archive/v%{version}.tar.gz
@@ -47,6 +47,10 @@ BIN_PATH=%{_bindir} SHARE_PATH=%{_datadir}/%{name} envsubst < %{name}.desktop > 
 %doc README.md CHANGELOG.md
 
 %changelog
+* Thu May 29 2026 Lyrebird maintainers - 1.3.0-1
+- In-app preset management, monitor mode and session restore.
+- Fixed buffer_size handling, Python version check and various crashes.
+
 * Wed Aug 23 2023 ps-gill <pgdev@daak.ca> - 1.2.0-3
 - Rearranging "Requires" to give PipeWire preference.
 - Updating spec "install" path to remove additional slashes.
