@@ -144,3 +144,8 @@ cython_debug/
 
 # JetBrains IDEs
 .idea
+
+# Build artifacts
+build/
+ci/*.deb
+ci/*.rpm
