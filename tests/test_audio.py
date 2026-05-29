@@ -33,6 +33,24 @@ def test_build_sox_command_honors_buffer_size():
     assert cmd[cmd.index("--buffer") + 1] == "256"
 
 
+def test_build_sox_command_with_new_effects():
+    preset = Preset("Spooky", pitch_value=0.0, reverb=90, echo=True, tremolo=20.0)
+    cmd = build_sox_command(0, preset, 128)
+    assert "tremolo" in cmd
+    assert cmd[cmd.index("tremolo") + 1] == "20.0"
+    assert "reverb" in cmd
+    assert cmd[cmd.index("reverb") + 1] == "90"
+    assert "echo" in cmd
+
+
+def test_build_sox_command_omits_unset_new_effects():
+    preset = Preset("Plain", pitch_value=0.0)
+    cmd = build_sox_command(0, preset, 128)
+    assert "tremolo" not in cmd
+    assert "reverb" not in cmd
+    assert "echo" not in cmd
+
+
 def test_parse_pactl_short():
     text = (
         "30\tmodule-null-sink\tsink_name=Lyrebird-Output node.description=Lyrebird\n"

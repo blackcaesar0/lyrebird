@@ -39,6 +39,18 @@ def build_sox_command(scale, preset, buffer_size):
     else:
         command_effects += ["downsample", "1"]
 
+    # Tremolo (robotic wobble): tremolo <speed Hz> <depth %>.
+    if getattr(preset, "tremolo", None) is not None:
+        command_effects += ["tremolo", str(preset.tremolo), "80"]
+
+    # Reverb: reverb <reverberance 0-100>.
+    if getattr(preset, "reverb", None) is not None:
+        command_effects += ["reverb", str(preset.reverb)]
+
+    # Echo: a fixed, pleasant single echo when enabled.
+    if getattr(preset, "echo", False):
+        command_effects += ["echo", "0.8", "0.9", "200", "0.3"]
+
     return [
         "sox",
         "--buffer", str(buffer_size),

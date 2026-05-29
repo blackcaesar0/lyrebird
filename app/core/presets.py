@@ -12,19 +12,29 @@ class Preset:
                 name,
                 pitch_value=None,
                 downsample_amount=None,
-                volume_boost=None):
+                volume_boost=None,
+                reverb=None,
+                echo=False,
+                tremolo=None):
         self.name = name
         self.pitch_value = pitch_value
         self.downsample_amount = downsample_amount
         self.volume_boost = volume_boost
+        # Reverberance 0-100 (SoX `reverb`). None disables.
+        self.reverb = reverb
+        # Simple echo effect (SoX `echo`). Boolean toggle.
+        self.echo = echo
+        # Tremolo speed in Hz (SoX `tremolo`), gives a robotic/wobble effect.
+        self.tremolo = tremolo
 
     def matches(self, y):
-        name = self.name == y.name
-        pitch = self.pitch_value == y.pitch_value
-        downsample = self.downsample_amount == y.downsample_amount
-        volume = self.volume_boost == y.volume_boost
-
-        return name and pitch and downsample and volume
+        return (self.name == y.name
+                and self.pitch_value == y.pitch_value
+                and self.downsample_amount == y.downsample_amount
+                and self.volume_boost == y.volume_boost
+                and self.reverb == y.reverb
+                and bool(self.echo) == bool(y.echo)
+                and self.tremolo == y.tremolo)
 
     def dictionary(self):
         dictionary = { "name": self.name }
@@ -34,6 +44,12 @@ class Preset:
             dictionary["downsample_amount"] = self.downsample_amount
         if self.volume_boost is not None:
             dictionary["volume_boost"] = self.volume_boost
+        if self.reverb is not None:
+            dictionary["reverb"] = self.reverb
+        if self.echo:
+            dictionary["echo"] = True
+        if self.tremolo is not None:
+            dictionary["tremolo"] = self.tremolo
         return dictionary
 
 DEFAULT_PRESETS = [
@@ -46,6 +62,9 @@ DEFAULT_PRESETS = [
     Preset("Bad Mic", None, 8, 0),
     Preset("Radio", None, 6, 0),
     Preset("Megaphone", None, 2, 0),
+    Preset("Robot", 0.0, tremolo=30.0),
+    Preset("Cathedral", -1.0, reverb=90),
+    Preset("Echo", 0.0, echo=True),
     Preset("Off", 0.0, None, None)
 ]
 
@@ -69,6 +88,9 @@ PRESETS_TOML_HEADER='''# Effect presets are defined in presets.toml
 # pitch_value: The pitch value of the preset, float value between -10.0 to 10.0. Omit if pitch value should not be affected from slider value.
 # downsample_amount Downsample by an integer factor.
 # volume_boost: Amount in dB to boost the audio. Can be negative to make the audio quieter.
+# reverb: Reverberance amount, integer between 0 and 100.
+# echo: Add a simple echo effect, true or false.
+# tremolo: Tremolo/wobble speed in Hz (float), gives a robotic effect.
 
 # e.g.
 # [[presets]]
@@ -76,6 +98,9 @@ PRESETS_TOML_HEADER='''# Effect presets are defined in presets.toml
 # pitch_value = -1.5
 # downsample_amount = 8
 # volume_boost = 8
+# reverb = 60
+# echo = true
+# tremolo = 20.0
 '''
 
 # Names reserved by the built-in presets. Used by the GUI editor so it only
@@ -135,10 +160,33 @@ def load_presets():
                         failed.append(name)
                         print(f"[error] Preset '{name}' failed to load: invalid volume boost value '{item['volume_boost']}'")
                         continue
+            # reverb (0-100)
+            reverb = None
+            if "reverb" in item and item["reverb"] != "none":
+                try:
+                    reverb = min(max(int(item["reverb"]), 0), 100)
+                except ValueError:
+                    failed.append(name)
+                    print(f"[error] Preset '{name}' failed to load: invalid reverb value '{item['reverb']}'")
+                    continue
+            # echo (boolean)
+            echo = bool(item.get("echo", False))
+            # tremolo (speed in Hz)
+            tremolo = None
+            if "tremolo" in item and item["tremolo"] != "none":
+                try:
+                    tremolo = float(item["tremolo"])
+                except ValueError:
+                    failed.append(name)
+                    print(f"[error] Preset '{name}' failed to load: invalid tremolo value '{item['tremolo']}'")
+                    continue
             preset = Preset(name=name,
                 pitch_value=pitch_value,
                 downsample_amount=downsample_amount,
-                volume_boost=volume_boost)
+                volume_boost=volume_boost,
+                reverb=reverb,
+                echo=echo,
+                tremolo=tremolo)
             presets.append(preset)
 
     custom_presets = []
@@ -184,13 +232,13 @@ def load_custom_presets():
     return load_presets()["presets"]
 
 
-def validate_preset_fields(name, pitch_value, downsample_amount, volume_boost):
+def validate_preset_fields(name, pitch_value, downsample_amount, volume_boost,
+                           reverb=None, echo=False, tremolo=None):
     '''
     Validate raw preset field values (as provided by the GUI editor).
 
-    Returns ``(preset, error)`` where exactly one is ``None``. ``pitch_value``,
-    ``downsample_amount`` and ``volume_boost`` may be ``None`` to leave the
-    corresponding effect unset.
+    Returns ``(preset, error)`` where exactly one is ``None``. Numeric effect
+    fields may be ``None``/blank to leave the corresponding effect unset.
     '''
     name = (name or "").strip()
     if not name:
@@ -221,7 +269,27 @@ def validate_preset_fields(name, pitch_value, downsample_amount, volume_boost):
         except (TypeError, ValueError):
             return None, "Volume boost must be a whole number (dB)."
 
-    return Preset(name, parsed_pitch, parsed_downsample, parsed_volume), None
+    parsed_reverb = None
+    if reverb is not None and reverb != "":
+        try:
+            parsed_reverb = int(reverb)
+        except (TypeError, ValueError):
+            return None, "Reverb must be a whole number between 0 and 100."
+        if not 0 <= parsed_reverb <= 100:
+            return None, "Reverb must be between 0 and 100."
+
+    parsed_tremolo = None
+    if tremolo is not None and tremolo != "":
+        try:
+            parsed_tremolo = float(tremolo)
+        except (TypeError, ValueError):
+            return None, "Tremolo speed must be a number (Hz)."
+        if parsed_tremolo <= 0:
+            return None, "Tremolo speed must be greater than 0."
+
+    preset = Preset(name, parsed_pitch, parsed_downsample, parsed_volume,
+                    reverb=parsed_reverb, echo=bool(echo), tremolo=parsed_tremolo)
+    return preset, None
 
 
 def add_custom_preset(preset):

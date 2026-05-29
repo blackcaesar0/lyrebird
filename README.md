@@ -19,7 +19,16 @@ Simple and powerful voice changer for Linux, written with Python & GTK.
 - Creates its own temporary virtual input device.
 - A clean and easy to use GUI.
 
-## What's new in v1.3.0
+## What's new
+
+**v1.4.0**
+
+- New **reverb, echo and tremolo (robot)** effects, plus *Robot*, *Cathedral*
+  and *Echo* presets.
+- **Edit** existing custom presets from the GUI (not just add/remove).
+- The `.deb` package is now built automatically in CI.
+
+**v1.3.0**
 
 - In-app preset management (add / edit / remove custom presets).
 - Monitor toggle to hear yourself.

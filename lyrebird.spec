@@ -2,7 +2,7 @@ Name:          lyrebird
 Summary:       Simple and powerful voice changer for Linux, written with Python & GTK.
 URL:           https://github.com/lyrebird-voice-changer/%{name}
 
-Version:       1.3.0
+Version:       1.4.0
 Release:       1%{dist}
 License:       MIT
 
@@ -47,6 +47,10 @@ BIN_PATH=%{_bindir} SHARE_PATH=%{_datadir}/%{name} envsubst < %{name}.desktop > 
 %doc README.md CHANGELOG.md
 
 %changelog
+* Fri May 29 2026 Lyrebird maintainers - 1.4.0-1
+- New reverb, echo and tremolo (robot) effects and presets.
+- Edit existing custom presets from the GUI.
+
 * Thu May 29 2026 Lyrebird maintainers - 1.3.0-1
 - In-app preset management, monitor mode and session restore.
 - Fixed buffer_size handling, Python version check and various crashes.

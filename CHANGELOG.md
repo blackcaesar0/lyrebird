@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.4.0] - 2026/05/29
+
+### Added
+
+- **New voice effects**: reverb, echo and tremolo (robotic wobble). These are
+  available as new `reverb`, `echo` and `tremolo` preset options.
+- **New built-in presets** using them: *Robot*, *Cathedral* and *Echo*.
+- **Edit existing custom presets** from the in-app preset manager (previously
+  add/delete only). The new effects are exposed in the editor form too.
+- A GitHub Actions job that builds the `.deb` package on each push.
+
+### Changed
+
+- `Preset.matches`, the `presets.toml` parser and the preset validator all
+  understand the new effect fields while remaining backwards compatible with
+  existing preset files.
+
 ## [v1.3.0] - 2026/05/29
 
 ### Added

@@ -88,6 +88,39 @@ def test_add_and_delete_custom_preset(temp_config):
     assert not any(p.name == "MyVoice" for p in loaded)
 
 
+def test_validate_preset_new_effects():
+    preset, error = presets.validate_preset_fields(
+        "Spooky", "0", None, None, reverb="90", echo=True, tremolo="20")
+    assert error is None
+    assert preset.reverb == 90
+    assert preset.echo is True
+    assert preset.tremolo == 20.0
+
+
+def test_validate_preset_rejects_reverb_out_of_range():
+    preset, error = presets.validate_preset_fields(
+        "X", None, None, None, reverb="150")
+    assert preset is None
+    assert "reverb" in error.lower()
+
+
+def test_validate_preset_rejects_bad_tremolo():
+    preset, error = presets.validate_preset_fields(
+        "X", None, None, None, tremolo="0")
+    assert preset is None
+
+
+def test_custom_preset_new_effects_roundtrip(temp_config):
+    preset, _ = presets.validate_preset_fields(
+        "Wobble", "1.0", None, None, reverb="40", echo=True, tremolo="15")
+    presets.add_custom_preset(preset)
+
+    loaded = [p for p in presets.load_custom_presets() if p.name == "Wobble"][0]
+    assert loaded.reverb == 40
+    assert loaded.echo is True
+    assert loaded.tremolo == 15.0
+
+
 def test_add_custom_preset_replaces_same_name(temp_config):
     p1, _ = presets.validate_preset_fields("Dup", "1.0", None, None)
     p2, _ = presets.validate_preset_fields("Dup", "2.0", None, None)
