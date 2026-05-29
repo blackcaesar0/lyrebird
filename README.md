@@ -21,6 +21,12 @@ Simple and powerful voice changer for Linux, written with Python & GTK.
 
 ## What's new
 
+**v1.4.1**
+
+- Pitch slider is debounced — dragging it no longer spawns a flood of `sox`
+  processes (smoother audio, lower CPU).
+- Faster device teardown and modernised GTK widgets.
+
 **v1.4.0**
 
 - New **reverb, echo and tremolo (robot)** effects, plus *Robot*, *Cathedral*

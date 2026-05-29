@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.4.1] - 2026/05/29
+
+### Fixed
+
+- **Pitch slider performance.** Dragging the slider fired GTK's `value-changed`
+  on every pixel, spawning and killing a `sox` process per tick (audio glitches
+  and CPU churn). The restart is now debounced so a drag results in a single
+  `sox` restart once the slider settles. The pending restart is also cancelled
+  on close so it can't fire after teardown.
+
+### Changed
+
+- Module teardown now uses a single `pactl list short` scan to remove the
+  loopback, null sink and remap source (previously two scans).
+- Modernised deprecated GTK widgets (`Gtk.VBox`/`Gtk.HBox` → `Gtk.Box`).
+- Removed dead code.
+
 ## [v1.4.0] - 2026/05/29
 
 ### Added

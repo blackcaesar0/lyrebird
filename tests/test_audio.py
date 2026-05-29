@@ -1,4 +1,12 @@
-from app.core.audio import build_sox_command, parse_pactl_short, PITCH_MULTIPLIER
+import app.core.audio as audio_module
+from app.core.audio import (
+    build_sox_command,
+    parse_pactl_short,
+    Audio,
+    PITCH_MULTIPLIER,
+    OUTPUT_SINK_NAME,
+    INPUT_SOURCE_NAME,
+)
 from app.core.presets import Preset
 
 
@@ -71,3 +79,37 @@ def test_parse_pactl_short():
 def test_parse_pactl_short_ignores_short_lines():
     assert parse_pactl_short("") == []
     assert parse_pactl_short("garbage line\n") == []
+
+
+def test_unload_pa_modules_targets_only_lyrebird(monkeypatch):
+    # A realistic mix of Lyrebird and unrelated modules.
+    modules = [
+        ("10", "module-null-sink", [("sink_name", OUTPUT_SINK_NAME)]),
+        ("11", "module-remap-source", [("source_name", INPUT_SOURCE_NAME),
+                                        ("master", f"{OUTPUT_SINK_NAME}.monitor")]),
+        ("12", "module-loopback", [("source", f"{OUTPUT_SINK_NAME}.monitor")]),
+        ("13", "module-null-sink", [("sink_name", "SomeoneElse")]),
+        ("14", "module-loopback", [("source", "OtherDevice.monitor")]),
+    ]
+    audio = Audio()
+    monkeypatch.setattr(audio, "get_pactl_modules", lambda: modules)
+
+    unloaded = []
+    monkeypatch.setattr(
+        audio_module.subprocess, "run",
+        lambda cmd, *a, **k: unloaded.append(cmd[-1]))
+
+    audio.unload_pa_modules()
+
+    # Only Lyrebird's own modules should be unloaded, in a single scan.
+    assert sorted(unloaded) == ["10", "11", "12"]
+
+
+def test_is_monitor_loopback():
+    audio = Audio()
+    assert audio._is_monitor_loopback(
+        ("12", "module-loopback", [("source", f"{OUTPUT_SINK_NAME}.monitor")]))
+    assert not audio._is_monitor_loopback(
+        ("14", "module-loopback", [("source", "Other.monitor")]))
+    assert not audio._is_monitor_loopback(
+        ("10", "module-null-sink", [("sink_name", OUTPUT_SINK_NAME)]))

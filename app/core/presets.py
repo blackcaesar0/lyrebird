@@ -3,10 +3,6 @@ import toml
 import app.core.config as config
 
 
-def key_or_default(key, dict, default):
-    return dict[key] if key in dict else default
-
-
 class Preset:
     def __init__(self,
                 name,

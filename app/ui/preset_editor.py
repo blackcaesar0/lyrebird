@@ -72,7 +72,7 @@ class PresetEditor(Gtk.Dialog):
         grid.attach(self.echo_check, 1, len(rows), 1, 1)
         box.pack_start(grid, False, False, 0)
 
-        button_row = Gtk.HBox(spacing=6)
+        button_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         self.save_btn = Gtk.Button(label="Add Preset")
         self.save_btn.connect("clicked", self.on_save_clicked)
         button_row.pack_start(self.save_btn, True, True, 0)
@@ -108,7 +108,7 @@ class PresetEditor(Gtk.Dialog):
 
     def _build_row(self, preset):
         row = Gtk.ListBoxRow()
-        hbox = Gtk.HBox(spacing=6)
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         hbox.set_margin_top(4)
         hbox.set_margin_bottom(4)
 

@@ -7,7 +7,7 @@
 # Requires: dpkg-deb (from dpkg). No root/fakeroot needed.
 set -eu
 
-VERSION="1.4.0"
+VERSION="1.4.1"
 ARCH="all"
 PKG="lyrebird_${VERSION}_${ARCH}"
 

@@ -1,6 +1,6 @@
 #!/bin/python
 
-from gi.repository import Gtk, GdkPixbuf
+from gi.repository import Gtk, GdkPixbuf, GLib
 
 # Core imports
 import app.core.presets as presets
@@ -16,6 +16,11 @@ from app.ui.preset_editor import PresetEditor
 
 OFF_PRESET_NAME = "Off"
 
+# Debounce window (ms) for restarting SoX while the pitch slider is dragged.
+# Without this, GTK's value-changed fires per pixel and spawns a new sox
+# process for each tick, causing audio glitches and CPU churn.
+RESTART_DEBOUNCE_MS = 150
+
 
 class MainWindow(Gtk.Window):
     '''
@@ -30,6 +35,9 @@ class MainWindow(Gtk.Window):
         self.set_default_size(600, 500)
 
         self.alert = Alert(self)
+
+        # Pending debounced sox restart (GLib source id), see schedule_restart.
+        self._restart_timeout_id = None
 
         headerbar = Gtk.HeaderBar()
         headerbar.set_show_close_button(True)
@@ -122,10 +130,10 @@ class MainWindow(Gtk.Window):
                     f"Presets file location: {config.presets_path}")
 
     def build_ui(self):
-        self.vbox = Gtk.VBox()
+        self.vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
         # Toggle switch for Lyrebird
-        self.hbox_toggle = Gtk.HBox()
+        self.hbox_toggle = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.toggle_label = Gtk.Label('Toggle Lyrebird')
         self.toggle_label.set_halign(Gtk.Align.START)
 
@@ -136,7 +144,7 @@ class MainWindow(Gtk.Window):
         self.hbox_toggle.pack_end(self.toggle_switch, False, False, 0)
 
         # Monitor (hear yourself) switch
-        self.hbox_monitor = Gtk.HBox()
+        self.hbox_monitor = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.monitor_label = Gtk.Label('Monitor (hear yourself)')
         self.monitor_label.set_halign(Gtk.Align.START)
 
@@ -147,7 +155,7 @@ class MainWindow(Gtk.Window):
         self.hbox_monitor.pack_end(self.monitor_switch, False, False, 0)
 
         # Pitch shift scale
-        self.hbox_pitch = Gtk.HBox()
+        self.hbox_pitch = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.pitch_label = Gtk.Label('Pitch Shift ')
         self.pitch_label.set_halign(Gtk.Align.START)
 
@@ -306,10 +314,28 @@ class MainWindow(Gtk.Window):
         else:
             state.audio.unload_monitor()
 
+    def schedule_restart(self):
+        """Restart SoX after a short quiet period.
+
+        Coalesces the rapid ``value-changed`` events emitted while dragging the
+        pitch slider (and a preset click that also moves the slider) into a
+        single sox restart instead of one per event.
+        """
+        if not self.toggle_switch.get_active():
+            return
+        if self._restart_timeout_id is not None:
+            GLib.source_remove(self._restart_timeout_id)
+        self._restart_timeout_id = GLib.timeout_add(
+            RESTART_DEBOUNCE_MS, self._restart_voice_changer)
+
+    def _restart_voice_changer(self):
+        self._restart_timeout_id = None
+        state.audio.kill_sox()
+        self.start_voice_changer()
+        return False  # one-shot
+
     def pitch_scale_moved(self, event):
-        if self.toggle_switch.get_active():
-            state.audio.kill_sox()
-            self.start_voice_changer()
+        self.schedule_restart()
 
     def preset_clicked(self, button):
         self.activate_preset(button.props.label)
@@ -327,12 +353,10 @@ class MainWindow(Gtk.Window):
             button.set_sensitive(False)
 
         if move_slider and current_preset.pitch_value is not None:
-            # Set the pitch of the slider
+            # Set the pitch of the slider (also triggers a debounced restart).
             self.pitch_scale.set_value(float(current_preset.pitch_value))
 
-        if self.toggle_switch.get_active():
-            state.audio.kill_sox()
-            self.start_voice_changer()
+        self.schedule_restart()
 
     def save_session(self):
         try:
@@ -346,6 +370,11 @@ class MainWindow(Gtk.Window):
 
     def close(self, *args):
         self.save_session()
+
+        # Cancel any pending debounced restart so it can't fire after teardown.
+        if self._restart_timeout_id is not None:
+            GLib.source_remove(self._restart_timeout_id)
+            self._restart_timeout_id = None
 
         state.audio.kill_sox()
         state.audio.unload_pa_modules()
